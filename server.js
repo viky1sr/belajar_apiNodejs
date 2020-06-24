@@ -7,12 +7,48 @@ const mahasiswa = [
     ];
 
 const server = http.createServer( (req, res, next) => {
-   res.setHeader('Content-Type', 'application/json');
-   res.setHeader('X-Power-By','Node.js');
-   res.end(JSON.stringify({
-       success: true,
-       data: mahasiswa
-   }));
+    const {method, url,} = req;
+    let body = [];
+
+    req
+        .on('data', chunk => {
+        body.push(chunk);
+        })
+        .on('end', () => {
+            body = Buffer.concat(body).toString();
+
+            let status = 400;
+            const response = {
+                success: false,
+                data: null,
+                message: null,
+            }
+
+            if (method === 'GET' && url === '/mahasiswa') {
+                status = 200;
+                response.success = true;
+                response.data = mahasiswa;
+            } else if (method === 'POST' && url === '/mahasiswa') {
+                const {id, name, nim} = JSON.parse(body);
+
+                if (!id || !name || !nim) {
+                    status = 400
+                    response.message = 'Please input your data!'
+                } else {
+                    status = 200;
+                    response.success = true;
+                    response.data = mahasiswa;
+                }
+
+            }
+
+            res.writeHead(status,{
+                'Content-Type': 'application/json',
+                'X-Power-By': 'Node.js'
+            });
+
+            res.end(JSON.stringify(response));
+        })
 });
 
 const port = 5000;
